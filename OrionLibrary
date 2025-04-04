@@ -579,4 +579,90 @@ function OrionLib:MakeWindow(WindowConfig)
             AddThemeObject(SetProps(MakeElement("Label", "", 12), {
                 Size = UDim2.new(1, -60, 0, 12),
                 Position = UDim2.new(0, 50, 1, -25),
-                Visible = not WindowConfig
+                Visible = not WindowConfig.HidePremium
+            }), "TextDark")
+        }),
+    }), "Second")
+
+    local WindowName = AddThemeObject(SetProps(MakeElement("Label", WindowConfig.Name, 14), {
+        Size = UDim2.new(1, -30, 2, 0),
+        Position = UDim2.new(0, 25, 0, -24),
+        Font = Enum.Font.GothamBlack,
+        TextSize = 20
+    }), "Text")
+
+    local WindowTopBarLine = AddThemeObject(SetProps(MakeElement("Frame"), {
+        Size = UDim2.new(1, 0, 0, 1),
+        Position = UDim2.new(0, 0, 1, -1)
+    }), "Stroke")
+
+    local MainWindow = AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 10), {
+        Parent = Orion,
+        Position = UDim2.new(0.5, -307, 0.5, -172),
+        Size = UDim2.new(0, 615, 0, 344),
+        ClipsDescendants = true
+    }), {
+        --SetProps(MakeElement("Image", "rbxassetid://3523728077"), {
+        --    AnchorPoint = Vector2.new(0.5, 0.5),
+        --    Position = UDim2.new(0.5, 0, 0.5, 0),
+        --    Size = UDim2.new(1, 80, 1, 320),
+        --    ImageColor3 = Color3.fromRGB(33, 33, 33),
+        --    ImageTransparency = 0.7
+        --}),
+        SetChildren(SetProps(MakeElement("TFrame"), {
+            Size = UDim2.new(1, 0, 0, 50),
+            Name = "TopBar"
+        }), {
+            WindowName,
+            WindowTopBarLine,
+            AddThemeObject(SetChildren(SetProps(MakeElement("RoundFrame", Color3.fromRGB(255, 255, 255), 0, 7), {
+                Size = UDim2.new(0, 70, 0, 30),
+                Position = UDim2.new(1, -90, 0, 10)
+            }), {
+                AddThemeObject(MakeElement("Stroke"), "Stroke"),
+                AddThemeObject(SetProps(MakeElement("Frame"), {
+                    Size = UDim2.new(0, 1, 1, 0),
+                    Position = UDim2.new(0.5, 0, 0, 0)
+                }), "Stroke"),
+                CloseBtn,
+                MinimizeBtn
+            }), "Second"),
+        }),
+        DragPoint,
+        WindowStuff
+    }), "Main")
+
+    if WindowConfig.ShowIcon then
+        WindowName.Position = UDim2.new(0, 50, 0, -24)
+        local WindowIcon = SetProps(MakeElement("Image", WindowConfig.Icon), {
+            Size = UDim2.new(0, 20, 0, 20),
+            Position = UDim2.new(0, 25, 0, 15)
+        })
+        WindowIcon.Parent = MainWindow.TopBar
+    end
+
+    AddDraggingFunctionality(DragPoint, MainWindow)
+
+    AddConnection(CloseBtn.MouseButton1Up, function()
+        MainWindow.Visible = false
+        UIHidden = true
+        OrionLib:MakeNotification({
+            Name = "Interface Hidden",
+            Content = "Tap RightShift to reopen the interface",
+            Time = 5
+        })
+        WindowConfig.CloseCallback()
+    end)
+
+    AddConnection(UserInputService.InputBegan, function(Input)
+        if Input.KeyCode == Enum.KeyCode.RightShift and UIHidden then
+            MainWindow.Visible = true
+        end
+    end)
+
+    AddConnection(MinimizeBtn.MouseButton1Up, function()
+        if Minimized then
+            TweenService:Create(MainWindow, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(0, 615, 0, 344) }):Play()
+            MinimizeBtn.Ico.Image = "rbxassetid://7072719338"
+            wait(.02)
+            MainWindow.ClipsDescendants = false
